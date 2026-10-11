@@ -1,0 +1,269 @@
+schema:
+  schema_id: frost_correction
+  name: 白霜纠错增强
+  version: 0.1.0
+  dependencies:
+  - frost_correction_eneng
+  - frost_correction_omission
+switches:
+- name: ascii_mode
+  reset: 0
+  states:
+  - 中文
+  - 英文
+engine:
+  processors:
+  - lua_processor@*frost_correction.bootstrap
+  - ascii_composer
+  - recognizer
+  - key_binder
+  - speller
+  - punctuator
+  - selector
+  - navigator
+  - express_editor
+  segmentors:
+  - ascii_segmentor
+  - matcher
+  - abc_segmentor
+  - punct_segmentor
+  - fallback_segmentor
+  translators:
+  - punct_translator
+  - lua_translator@*frost_correction.fast
+  filters:
+  - lua_filter@*frost_correction.context
+  - lua_filter@*frost_correction.cross_filter
+  - uniquifier
+  - lua_filter@*frost_correction.history_marker
+  - lua_filter@*frost_correction.history_guard
+  - lua_filter@*frost_correction.personal_rank
+  - lua_filter@*frost_correction.comment_cleanup
+menu:
+  page_size: 6
+ascii_composer:
+  good_old_caps_lock: true
+  switch_key:
+    Shift_L: commit_code
+    Shift_R: commit_code
+    Control_L: noop
+    Control_R: noop
+grammar:
+  collocation_max_length: 6
+  collocation_min_length: 2
+  collocation_penalty: '-14'
+  language: zh-moqi
+  non_collocation_penalty: '-6'
+  rear_penalty: '-18'
+  weak_collocation_penalty: '-100'
+correction:
+  generational_gc: false
+  context_model: wanxiang-lts-zh-hans
+speller:
+  alphabet: abcdefghijklmnopqrstuvwxyz
+  delimiter: ' '''
+  algebra:
+  - erase/^hm$/
+  - erase/^m$/
+  - erase/^n$/
+  - erase/^ng$/
+  - abbrev/^([a-z]).+$/$1/
+  - abbrev/^([zcs]h).+$/$1/
+  - derive/^([nl])ve$/$1ue/
+  - derive/^([jqxy])u/$1v/
+  - derive/^([nl])ue$/$1ve/
+  - derive/^([jqxy])v/$1u/
+  - derive/([zcs])h(a|e|i|u|ai|ei|an|en|ou|uo|ua|un|ui|uan|uai|uang|ang|eng|ong)$/h$1$2/
+  - derive/([zcs])h([aeiu])$/$1$2h/
+  - derive/^([wghk])ai$/$1ia/
+  - derive/([wfghkz])ei$/$1ie/
+  - derive/([jqx])ie$/$1ei/
+  - derive/([rtypsdghklzcbnm])ao$/$1oa/
+  - derive/([ypfm])ou$/$1uo/
+  - derive/([wrtypsdfghklzcbnm])ang$/$1nag/
+  - derive/([wrtypsdfghklzcbnm])ang$/$1agn/
+  - derive/([wrtpsdfghklzcbnm])eng$/$1neg/
+  - derive/([wrtpsdfghklzcbnm])eng$/$1egn/
+  - derive/([qtypdjlxbnm])ing$/$1nig/
+  - derive/([qtypdjlxbnm])ing$/$1ign/
+  - derive/([rtysdghklzcn])ong$/$1nog/
+  - derive/([rtysdghklzcn])ong$/$1ogn/
+  - derive/([qtpdjlxbnm])iao$/$1ioa/
+  - derive/([qtpdjlxbnm])iao$/$1oia/
+  - derive/([rtsghkzc])ui$/$1iu/
+  - derive/([qjlxnm])iu$/$1ui/
+  - derive/([qjlxn])iang$/$1aing/
+  - derive/([qjlxn])iang$/$1inag/
+  - derive/([g|k|h|zh|sh])ua$/$1au/
+  - derive/([g|h|k|zh|ch|sh])uai$/$1aui/
+  - derive/([qrtysdghjklzxcn])uan$/$1aun/
+  - derive/([nlyjqx])ue$/$1eu/
+  - derive/([g|h|k|zh|ch|sh])uang$/$1aung/
+  - derive/([g|h|k|zh|ch|sh])uang$/$1uagn/
+  - derive/([g|h|k|zh|ch|sh])uang$/$1unag/
+  - derive/([g|h|k|zh|ch|sh])uang$/$1augn/
+  - derive/([jqx])iong$/$1inog/
+  - derive/([jqx])iong$/$1oing/
+  - derive/([jqx])iong$/$1iogn/
+  - derive/([jqx])iong$/$1oign/
+  - derive/([rtsdghkzc])o(u|ng)$/$1o/
+  - derive/(.+)ong$/$1on/
+  - derive/([tl])eng$/$1en/
+  - derive/([qwrtypsdfghjklzxcbnm])([aeio])ng$/$1ng/
+punctuator:
+  full_shape:
+    ',': ，
+    .: 。
+    '?': ？
+    '!': ！
+  half_shape:
+    ',': ，
+    .: 。
+    '?': ？
+    '!': ！
+key_binder:
+  bindings:
+  - when: paging
+    accept: minus
+    send: Page_Up
+  - when: has_menu
+    accept: equal
+    send: Page_Down
+recognizer:
+  patterns:
+    email: ^[A-Za-z][-_.0-9A-Za-z]*@.*$
+    url: ^(www[.]|https?:).*$
+    uppercase: '[A-Z][-_+a-zA-Z0-9]*$'
+typo_rank:
+  context_gain: 6
+  min_gain: 6
+  nasal_gain: 4
+  sentence_alt_gap: 3
+  word_alt_gap: 2.5
+translator:
+  always_show_comments: true
+  comment_format:
+  - xform/^/［/
+  - xform/$/］/
+  dictionary: frost_correction_base
+  enable_correction: false
+  grammar_penalty: '-4'
+  initial_quality: 1.2
+  max_homographs: 3
+  max_homophones: 3
+  max_sentences: 8
+  preedit_format: []
+  prism: frost_correction
+  spelling_hints: 8
+  user_dict: frost_correction
+repair_primary:
+  always_show_comments: true
+  comment_format: &id001
+  - xform/^/［/
+  - xform/$/］/
+  dictionary: frost_correction_base
+  enable_correction: false
+  grammar_penalty: '-4'
+  initial_quality: 1.2
+  max_homographs: 3
+  max_homophones: 3
+  max_sentences: 2
+  preedit_format: []
+  prism: frost_correction
+  spelling_hints: 64
+  user_dict: frost_correction
+repair_metadata:
+  always_show_comments: true
+  comment_format:
+  - xform/^/［/
+  - xform/$/］/
+  dictionary: frost_correction_base
+  enable_correction: false
+  grammar_penalty: '-4'
+  initial_quality: 1.2
+  max_homographs: 16
+  max_homophones: 16
+  max_sentences: 16
+  preedit_format: []
+  prism: frost_correction
+  spelling_hints: 64
+  user_dict: frost_correction
+repair_limited:
+  always_show_comments: true
+  comment_format: *id001
+  dictionary: frost_correction_base
+  enable_correction: false
+  grammar_penalty: '-4'
+  initial_quality: 1.2
+  max_homographs: 2
+  max_homophones: 2
+  max_sentences: 2
+  preedit_format: []
+  prism: frost_correction
+  spelling_hints: 64
+  user_dict: frost_correction
+secondary_primary:
+  always_show_comments: true
+  comment_format:
+  - xform/^/［/
+  - xform/$/］/
+  dictionary: frost_correction_base
+  enable_correction: false
+  grammar_penalty: '-4'
+  initial_quality: 1.2
+  max_homographs: 4
+  max_homophones: 4
+  max_sentences: 4
+  preedit_format: []
+  prism: frost_correction
+  spelling_hints: 64
+  user_dict: frost_correction
+history_reference:
+  always_show_comments: true
+  comment_format:
+  - xform/^/［/
+  - xform/$/］/
+  dictionary: frost_correction_base
+  enable_completion: false
+  enable_correction: false
+  enable_user_dict: false
+  enable_word_completion: false
+  grammar_penalty: '-4'
+  initial_quality: 1.2
+  max_homographs: 16
+  max_homophones: 16
+  max_sentences: 4
+  preedit_format: []
+  prism: frost_correction
+  spelling_hints: 64
+  user_dict: frost_correction
+typo:
+  dictionary: frost_correction_base
+  enable_completion: false
+  enable_correction: true
+  enable_user_dict: true
+  enable_word_completion: false
+  grammar_penalty: '-4'
+  initial_quality: 0.7
+  max_homographs: 8
+  max_homophones: 8
+  max_sentences: 2
+  prism: frost_correction_eneng
+  spelling_hints: 64
+  user_dict: frost_correction_typo
+  preedit_format: []
+omission:
+  dictionary: frost_correction_base
+  enable_completion: false
+  enable_correction: false
+  enable_user_dict: true
+  enable_word_completion: false
+  grammar_penalty: '-4'
+  initial_quality: 0.7
+  max_homographs: 8
+  max_homophones: 8
+  max_sentences: 2
+  prism: frost_correction_omission
+  spelling_hints: 64
+  user_dict: frost_correction_omission
+  preedit_format: []

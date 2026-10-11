@@ -1,0 +1,30 @@
+{
+  "repository": "gaboolic/rime-frost",
+  "revision": "64d24e89341aee133c0ad0f09b5f47a695e3d508",
+  "files": {
+    "LICENSE": {
+      "git_blob_sha1": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
+      "size": 35149
+    },
+    "cn_dicts/8105.dict.yaml": {
+      "git_blob_sha1": "9cbfe2acf59bb3124993d4b8b3b271f8e246b72d",
+      "size": 99367
+    },
+    "cn_dicts/base.dict.yaml": {
+      "git_blob_sha1": "6e2999896e44025fd7e6d12b6a27e077c5c84457",
+      "size": 9937947
+    },
+    "cn_dicts/ext.dict.yaml": {
+      "git_blob_sha1": "6b8a6c84c6c7b638f099b6d2a5a91f35662fb767",
+      "size": 7711375
+    },
+    "cn_dicts/others.dict.yaml": {
+      "git_blob_sha1": "95bc2e1451359be44ea362f92b5bdae882bfdf5c",
+      "size": 70197
+    },
+    "zh-moqi.gram": {
+      "git_blob_sha1": "f398e83c4c39a6856062ba0cb49709b00854b710",
+      "size": 7339052
+    }
+  }
+}
