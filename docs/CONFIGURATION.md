@@ -1,20 +1,56 @@
-# 配置与学习数据
+# 设置与输入习惯学习
 
-新建 `frost_correction.custom.yaml`，按需修改：
+默认设置可以直接使用。这篇文档介绍候选标记、学习方式，以及几个常用的可选设置。
+
+## 先认识候选旁的标记
+
+| 标记 | 意思 |
+| --- | --- |
+| `≈` | 方案尝试修正了你的拼音，这个词是纠错候选 |
+| `*` | 这个词来自 Rime 的用户词典，通常与过去的输入有关 |
+| `∞` | 由 Rime 组合出的整句候选 |
+
+输入栏会保留你实际敲下的字母，可能按音节添加空格。这样可以看出是否输错，再决定选择哪个候选。
+
+## 经常使用的词会怎样学习
+
+当你选择并提交一个词时，方案会累积对它的偏好。反复明确选择同一个词后，它更有机会排到前面；带星号本身不会让它自动置顶。
+
+偏好衰减得很慢：半衰期为五年，意思是如果以后完全不再使用，五年后留下的偏好约为原来的一半。它只调整已有候选的顺序。
+
+本方案的偏好记录保存在 Rime 用户目录的 `frost_correction_selection.tsv`。备份用户目录时，可以一并保存这个文件；Rime 自身还会维护原生用户词典。
+
+## 修改设置的方法
+
+1. 打开 Rime 用户目录，位置见[安装指南](INSTALL.md#安装前准备)。
+2. 新建文本文件 `frost_correction.custom.yaml`。Windows 请检查文件名末尾没有额外的 `.txt`。
+3. 用文本编辑器写入配置并保存，再在输入法中重新部署。
+
+例如，每页显示八个候选：
 
 ```yaml
 patch:
-  menu/page_size: 6
-  correction/generational_gc: false
+  menu/page_size: 8
 ```
 
-修改后重新部署。此文件和本地用户数据不要提交到公开仓库。
+YAML 使用空格缩进，示例里每行前面是两个空格。多个设置放在同一个 `patch:` 下；如果文件已经存在，添加设置即可。
 
-## 可选模型
+## 开启生成式 GC（进阶）
 
-默认 Octagram 语言模型为 `zh-moqi`。纠错代码允许读取可选万象统计模型提供上下文对比；默认安装不下载该大模型，缺少文件时跳过额外证据。
+GC 是 Lua 清理暂时不用的数据的机制。Lua 5.4 的生成式 GC 在部分环境下有助于降低延迟，默认关闭。确认输入法使用 Lua 5.4 后，可以尝试：
 
-从 [RIME-LMDG 官方仓库](https://github.com/amzxyz/RIME-LMDG)下载兼容的 `wanxiang-lts-zh-hans.gram`，放入用户目录，再设置：
+```yaml
+patch:
+  correction/generational_gc: true
+```
+
+重新部署后测试输入是否正常。Lua 5.3 会继续使用原来的回收方式。这个设置可能影响同一输入法进程里的其他 Lua 组件；想恢复时改成 `false`，重新部署并重启输入法程序。
+
+## 更换语言模型（进阶）
+
+语言模型用于判断哪些词语搭配更常见。默认的 `zh-moqi` 模型较轻，初次使用建议保留默认配置。
+
+需要尝试万象模型时，从 [RIME-LMDG 官方项目](https://github.com/amzxyz/RIME-LMDG)获取兼容的 `wanxiang-lts-zh-hans.gram`，放到 Rime 用户目录，再设置：
 
 ```yaml
 patch:
@@ -22,20 +58,16 @@ patch:
   correction/context_model: wanxiang-lts-zh-hans
 ```
 
-独立的补充译码仍使用 `zh-moqi`，因此不要删除默认模型。不同模型会改变候选与延迟，不能据此声称公开版与本地定制版结果一致。
+重新部署后生效。补充候选仍会使用 `zh-moqi`，因此保留这两个文件。万象模型较大，手机上应先考虑可用内存。
 
-## 可选生成式 GC
+如果安装时遇到同名 `zh-moqi.gram` 冲突，可以先用[导入目录](INSTALL.md#android通过输入法导入)方式准备文件。将导入目录中的模型重命名为 `frost-correction-moqi.gram`，在安装配置前完成以下调整：
 
-Lua 5.4 前端可设置 `correction/generational_gc: true`。Lua 5.3 无该模式，初始化会保留原 GC。开启后影响同一进程的 Lua 状态，并非仅对一个候选有效；回退需要关闭选项并重启前端。项目不替换原生 DLL、不关闭 GC。
+1. 将 `frost_correction.schema.yaml` 中 `grammar` 下的 `language` 改成 `frost-correction-moqi`。
+2. 将 `lua/frost_correction/dual.lua` 中设置 `grammar/language` 的 `zh-moqi` 改成 `frost-correction-moqi`。
+3. 将准备好的文件复制到用户目录，手动启用 `frost_correction`，再重新部署。
 
-## 本地学习
+这项操作适合熟悉配置的用户。更换模型后，候选顺序和输入速度都可能变化。
 
-提交产生的偏好写入用户目录 `frost_correction_selection.tsv`；原生用户词典由 Rime 管理。算法代码可公开，已有词语和计数不能随发布者的环境打包。
+## Shift 切换
 
-偏好随实际选择累积，五年半衰期。只有存在于候选中的词才能被提升，不会从记录中凭空制造候选。历史星号不会单独构成强制置顶理由。
-
-## Shift 与显示
-
-公开方案使用 Rime 自身的 Shift 配置：中文输入中单独 Shift 提交原始英文。没有捆绑 Windows 专用快捷键守护程序，组合键行为以对应前端为准。
-
-正确输入无 `≈`，真实纠错显示一个 `≈`。查看预编辑时应看到实际输入字母，避免将修复后的拼音伪装成用户输入。
+中文输入过程中，单独按 Shift 会提交正在输入的英文字母。快捷键组合的具体行为由所用的输入法程序处理。

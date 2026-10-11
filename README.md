@@ -1,52 +1,54 @@
 # 白霜纠错增强 · rime-frost-correction
 
-基于 Rime 和白霜通用词库的全拼纠错方案。通过有预算的错误路径搜索、统计上下文和本地选择学习，处理鼻音、邻键、漏键及交换错误。
+一个用于 Rime 的全拼输入方案。在白霜词库的基础上，帮助处理输错拼音的情况，并根据你实际选择的词逐渐学习输入习惯。
 
-- 正确输入保留正常候选，真实纠错显示 `≈`，预编辑保留实际输入字母。
-- 使用 Rime 原生词典查找与造句，Lua 负责查询调度及候选合并。
-- 用户偏好由实际提交累积，半衰期五年；学习数据只存在使用者本机。
-- 默认使用轻量统计模型，可选万象模型和 Lua 5.4 生成式 GC。
+例如，输入 `jintain` 时，方案会尝试把交换了位置的字母修正为 `jintian`，给出“今天”这样的候选。纠错候选旁显示 `≈`，输入栏仍显示你实际敲下的字母。
 
-**公开版不包含个人定制词库、手工词频、自定义短语、原始探索记录或 MSVC 实验。** 仓库没有预编译 DLL，也不要求自行编译 Rime。安装时下载固定版本的上游白霜通用基础词库；不读取发布者本机词库。
+## Vibe Coding 说明
 
-## 使用
+**本项目基本由 AI 模型 GPT 6.1 Sol 生成，包括代码、安装脚本和文档；维护者通过提出需求和测试结果推进迭代。** 测试能够发现一部分问题，仍可能存在遗漏或兼容性问题。请谨慎安装：先备份 Rime 用户目录，阅读[安装与回退说明](docs/INSTALL.md)，确认能够恢复原配置后再使用。
 
-需要已安装的 Rime 前端，包含 **librime-lua（Lua ≥5.3）和 Octagram 插件**，并支持 `lua_translator@*模块名` 自动加载。安装器需要 Python ≥3.10、网络和少量 Python 依赖；第一次重新部署会编译词库，请耐心等待。
+## 它能做什么
 
-下载或克隆仓库后，在仓库目录运行：
+- 尝试纠正 `in/ing`、`en/eng` 混淆、附近按键误触、漏字母和相邻字母交换。
+- 根据词库和常见词语搭配，选择更合适的候选。
+- 根据你实际提交的词积累偏好，让经常使用的词更容易选到。
 
-```powershell
-# Windows／小狼毫；自定义用户目录请传入 -UserDir
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-```
+本方案适合全拼输入。第一次使用时，保留默认设置即可。
 
-```sh
-# macOS／鼠须管
-sh install.sh
-# Linux／Fcitx5；IBus 使用 --frontend ibus
-sh install.sh --frontend fcitx5
-```
+## 开始使用
 
-完成后，在输入法中**重新部署**，选择“白霜纠错增强”。安装器不自动重启输入法或替换其程序。
+Rime 在不同系统上有不同的输入法程序：Windows 常用“小狼毫”，macOS 常用“鼠须管”，Android 可以使用“同文”。本项目是一套安装到这些程序中的**输入方案**。
 
-Android 的应用私有目录不能由通用桌面脚本直接写入。先生成导入目录：
+安装前需要：
 
-```sh
-sh install.sh --package-dir ./android-rime
-```
+1. 已安装 Rime 输入法，能够正常输入中文。它需要支持 Lua 5.3 或更新版本，以及 Octagram 语言模型插件；检查方法见[安装指南](docs/INSTALL.md#安装前准备)。
+2. 电脑上有 Python 3.10 或更新版本，用来运行安装脚本。
+3. 能联网下载词库和模型。
 
-再通过同文等前端的文件导入功能导入、启用 `frost_correction` 并部署。具体目录与权限由前端决定，详见[安装与回退](docs/INSTALL.md)。
+在本页上方点击 **Code → Download ZIP**，解压后按系统操作。熟悉 Git 的用户也可以克隆仓库。
 
-## 文档
+| 系统 | 在解压后的项目文件夹运行 | 后续操作 |
+| --- | --- | --- |
+| Windows | `powershell -ExecutionPolicy Bypass -File .\install.ps1` | 在小狼毫中重新部署，选择“白霜纠错增强” |
+| macOS | `sh install.sh` | 在鼠须管中重新部署，选择“白霜纠错增强” |
+| Linux／Fcitx5 | `sh install.sh --frontend fcitx5` | 重新部署，在方案菜单中选择本方案 |
+| Android | 在电脑上生成导入文件夹，再复制到手机 | 使用输入法自身的导入、启用和部署功能 |
 
-- [探索过程与当前技术架构](docs/EVOLUTION_AND_ARCHITECTURE.md)：只保留设计演进与结论，不发布原始记录。
-- [Windows、macOS、Linux、Android 安装与回退](docs/INSTALL.md)
-- [配置、学习数据与兼容性](docs/CONFIGURATION.md)
-- [验证方法与公开版边界](docs/VALIDATION.md)
-- [上游来源与授权](THIRD_PARTY_NOTICES.md)
+“重新部署”就是让 Rime 读取新配置并准备词库。第一次可能需要等待一会儿。如何打开命令窗口、Android 如何导入、自定义目录如何指定，都在[分系统安装指南](docs/INSTALL.md)中。
 
-公开版默认词库和模型与开发者本机定制环境不同，不能直接套用其跑分。跨平台复用的是 Rime/Lua 方案；当前没有把所有系统实机验证描述为已完成。
+## 常用文档
 
-## 授权
+- [安装、常见问题与回退](docs/INSTALL.md)：第一次使用从这里开始。
+- [设置与输入习惯学习](docs/CONFIGURATION.md)：调整候选数量，了解星号与纠错标记。
+- [探索过程与技术架构](docs/EVOLUTION_AND_ARCHITECTURE.md)：了解方案如何工作，以及设计如何演进。
+- [测试情况与验证方法](docs/VALIDATION.md)：查看已经验证的内容，或自行运行测试。
+- [使用到的开源项目](THIRD_PARTY_NOTICES.md)：资源来源与授权。
 
-GPL-3.0，见 [LICENSE](LICENSE)。白霜及其上游贡献者的相关代码与资源保留原有授权；模型由安装器从上游下载，不随 Git 仓库分发。
+## 目前的验证情况
+
+Windows 已完成隔离环境的词库编译和基本输入检查，安装器自动测试已在 Windows、macOS、Linux 上通过。macOS、Linux、Android 的实际输入体验仍待实机验证。
+
+## 开源许可
+
+本项目采用 [GPL-3.0](LICENSE)。词库与模型来自白霜等上游项目，具体来源见[开源项目说明](THIRD_PARTY_NOTICES.md)。
